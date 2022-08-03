@@ -30,7 +30,12 @@ namespace Utils
                     {
                         throw new ConfigurationMissingException(prop.Name);
                     }
-                    prop.SetValue(this, configVal);
+                    if (prop.PropertyType == typeof(bool))
+                    {
+                        prop.SetValue(this, bool.Parse(configVal));
+                    }
+                    else
+                        prop.SetValue(this, configVal);
                 }
 
                 // Set config sub-sections

@@ -6,7 +6,7 @@ using SPUserImageSync;
 
 namespace ConsoleApp.Engine
 {
-    public class AADUserProfileImageSync : BaseSyncClass
+    public class GraphUserProfileImageSyncroniser : BaseSyncClass
     {
         #region Constructor & Privates
 
@@ -14,7 +14,7 @@ namespace ConsoleApp.Engine
         private ClientContext _mySitesCtx;
         private PeopleManager _peopleManager;
 
-        public AADUserProfileImageSync(Config config, DebugTracer tracer, GraphServiceClient graphServiceClient, ClientContext adminCtx, ClientContext mySitesCtx, PeopleManager peopleManager) : base(config, tracer, graphServiceClient)
+        public GraphUserProfileImageSyncroniser(Config config, DebugTracer tracer, GraphServiceClient graphServiceClient, ClientContext adminCtx, ClientContext mySitesCtx, PeopleManager peopleManager) : base(config, tracer, graphServiceClient)
         {
             _adminCtx = adminCtx;
             _mySitesCtx = mySitesCtx;
@@ -92,31 +92,39 @@ namespace ConsoleApp.Engine
             var picRelativeUrl = $"/User Photos/Profile Pictures/{Guid.NewGuid()}_ExternalMigratedThumbnail.jpg";
             var fullPicUrl = $"{_mySitesCtx.Web.Url}{picRelativeUrl}";
 
-
-            using (var graphImageStream = await _graphServiceClient.Users[user.Id].Photo.Content.Request().GetAsync())
+            if (!_config.SimulateSPOUpdatesOnly)
             {
-                // Upload a file by adding it to the folder's files collection
-                var addedFile = siteAssetsFolder.Files.Add(new FileCreationInformation
+                // Get and upload Azure AD image to SPO library
+                using (var graphImageStream = await _graphServiceClient.Users[user.Id].Photo.Content.Request().GetAsync())
                 {
-                    Url = picRelativeUrl,
-                    ContentStream = graphImageStream
-                });
-                await _mySitesCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
+                    // Upload a file by adding it to the folder's files collection
+                    var addedFile = siteAssetsFolder.Files.Add(new FileCreationInformation
+                    {
+                        Url = picRelativeUrl,
+                        ContentStream = graphImageStream
+                    });
+                    await _mySitesCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
+                }
+                _tracer.TrackTrace($"Uploaded profile picture to URL: {fullPicUrl}");
+
+                // Update user profile
+                _peopleManager.SetSingleValueProfileProperty(GetProfileId(azureAdUsername), "PictureURL", fullPicUrl);
+
+                try
+                {
+                    await _adminCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
+                    _tracer.TrackTrace($"{azureAdUsername} profile updated succesfully for uploaded image from Azure AD");
+                }
+                catch (ServerException ex)
+                {
+                    // May get "User Profile Error 1000: User Not Found: Could not load profile data from the database."
+                    _tracer.TrackTrace($"{azureAdUsername} profile update failed - {ex.Message}");
+                }
             }
-            _tracer.TrackTrace($"Uploaded {fullPicUrl}");
-
-
-            _peopleManager.SetSingleValueProfileProperty(GetProfileId(azureAdUsername), "PictureURL", fullPicUrl);
-
-            try
+            else
             {
-                await _adminCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
-                _tracer.TrackTrace($"{azureAdUsername} profile updated succesfully for uploaded image from Azure AD");
-            }
-            catch (ServerException ex)
-            {
-                // May get "User Profile Error 1000: User Not Found: Could not load profile data from the database."
-                _tracer.TrackTrace($"{azureAdUsername} profile update failed - {ex.Message}");
+                _tracer.TrackTrace($"SIMULATION MODE: Uploaded profile picture to URL: {fullPicUrl}");
+                _tracer.TrackTrace($"SIMULATION MODE: {azureAdUsername} profile updated succesfully for uploaded image from Azure AD");
             }
         }
     }

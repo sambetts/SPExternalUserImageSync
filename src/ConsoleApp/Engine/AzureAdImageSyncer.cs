@@ -74,7 +74,7 @@ namespace ConsoleApp.Engine
             }
 
             // Start sync for each user
-            var s = new AADUserProfileImageSync(_config, _tracer, _graphServiceClient, _adminCtx, _mySitesCtx, _peopleManager);
+            var s = new GraphUserProfileImageSyncroniser(_config, _tracer, _graphServiceClient, _adminCtx, _mySitesCtx, _peopleManager);
             foreach (var externalUser in allUsers)
             {
                 await s.SyncUser(externalUser.UserPrincipalName);

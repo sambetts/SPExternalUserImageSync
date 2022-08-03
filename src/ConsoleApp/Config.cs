@@ -11,6 +11,9 @@ namespace SPUserImageSync
         }
 
         [ConfigValue]
+        public bool SimulateSPOUpdatesOnly { get; set; }
+
+        [ConfigValue]
         public string TenantName { get; set; } = string.Empty;
 
         [ConfigValue]

@@ -9,6 +9,15 @@ Users are updated only if the following is true:
 *	There is not an image in SharePoint Online for the user.
 
 It can be run in “simulation mode” so it pretends to update the any users that fit the criteria – highly recommended for the 1st run at least.
+
+In this example I'm a guest in tenant "m365x72460609":
+![alt](imgs/AzureAD.jpg)
+
+Running the app will copy my image to my SPO user profile:
+![alt](imgs/SP.jpg)
+
+
+It could easily be adapated to run as a Function app to run on certain events/schedule too.
 ## Steps needed to Setup
 We need x2 app identities created as there is a design limitation that only updates to “other” profiles can be done programmatically with SharePoint App-Only authentication. 
 So, one app is to allow profile updates and the other app is to allow us to read Graph users.
@@ -48,6 +57,7 @@ SPClientID | "879abfd9-cab9-493b-a616-c81f3f3b61c5" | SharePoint App-Only auth d
 SPSecret | "RaawxXXXXXXXXXXX" | SharePoint App-Only auth details.
 TenantName | "contoso" | your org tenant name – “contoso” for example (contoso.onmicrosoft.com).
 SimulateSPOUpdatesOnly | true | Write updates to SPO or just pretend. Highly recommended to set to “true” to start.
+AppInsightsInstrumentationKey | "76da79c3-5381-4930-bbda-f6e8dc406b6e" | Optional (but recommended). Application Insights instrumentation key for logging.
 
 If any of these values are blank the app will crash on start-up.
 ## Setup Instructions

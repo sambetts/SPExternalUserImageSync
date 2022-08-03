@@ -3,3 +3,10 @@
 ################################################################################
 
 /src/.vs/SPExternalUserImageSync
+/src/ConsoleApp/bin/Debug/net6.0
+/src/ConsoleApp/obj
+/src/SPOUtils/bin/Debug/net6.0
+/src/SPOUtils/obj
+/src/Utils/bin/Debug/net6.0
+/src/Utils/obj
+/src/.vs/ProjectEvaluation

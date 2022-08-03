@@ -1,64 +1,28 @@
-﻿using Azure.Identity;
-using Microsoft.Graph;
+﻿using Microsoft.Graph;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.UserProfiles;
-using PnP.Framework;
 using SPOUtils;
+using SPUserImageSync;
 
-namespace SPUserImageSync
+namespace ConsoleApp.Engine
 {
-    internal class ImgSync : IDisposable
+    public class AADUserProfileImageSync : BaseSyncClass
     {
         #region Constructor & Privates
 
-        private Config _config;
-        private DebugTracer _tracer;
         private ClientContext _adminCtx;
         private ClientContext _mySitesCtx;
         private PeopleManager _peopleManager;
-        private readonly GraphServiceClient _graphServiceClient;
 
-        public ImgSync(Config config, DebugTracer tracer)
+        public AADUserProfileImageSync(Config config, DebugTracer tracer, GraphServiceClient graphServiceClient, ClientContext adminCtx, ClientContext mySitesCtx, PeopleManager peopleManager) : base(config, tracer, graphServiceClient)
         {
-            this._config = config;
-            this._tracer = tracer;
-            var siteUrlAdmin = $"https://{_config.SPOHostname}-admin.sharepoint.com";
-            var siteUrlMySite = $"https://{_config.SPOHostname}-my.sharepoint.com";
-            _adminCtx = new AuthenticationManager().GetACSAppOnlyContext(siteUrlAdmin, _config.SPClientID, _config.SPSecret);
-            _mySitesCtx = new AuthenticationManager().GetACSAppOnlyContext(siteUrlMySite, _config.SPClientID, _config.SPSecret);
-            _peopleManager = new PeopleManager(_adminCtx);
-            this._graphServiceClient = new GraphServiceClient(
-                new ClientSecretCredential(_config.AzureAdConfig.TenantId, _config.AzureAdConfig.ClientID, _config.AzureAdConfig.Secret));
-
+            _adminCtx = adminCtx;
+            _mySitesCtx = mySitesCtx;
+            _peopleManager = peopleManager;
         }
         #endregion
 
-        internal async Task Go(string azureAdUsername)
-        {
-            var spProfileId = GetProfileId(azureAdUsername);
-            var personProperties = _peopleManager.GetPropertiesFor(spProfileId);
-
-            // Test access
-            _tracer.TrackTrace("Testing access to SharePoint...");
-            try
-            {
-                _mySitesCtx.Load(_mySitesCtx.Web, w => w.Title, w => w.Url, w => w.Folders);
-                await _mySitesCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
-
-                _adminCtx.Load(personProperties, p => p.AccountName, p => p.UserProfileProperties);
-                await _adminCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
-            }
-            catch (Exception ex)
-            {
-                _tracer.TrackTrace($"Can't access SharePoint - got error {ex.Message}");
-                return;
-            }
-
-            await VerifyUserProfile(azureAdUsername);
-        }
-
-
-        private async Task VerifyUserProfile(string azureAdUsername)
+        internal async Task SyncUser(string azureAdUsername)
         {
             var spProfileId = GetProfileId(azureAdUsername);
 
@@ -132,9 +96,10 @@ namespace SPUserImageSync
             using (var graphImageStream = await _graphServiceClient.Users[user.Id].Photo.Content.Request().GetAsync())
             {
                 // Upload a file by adding it to the folder's files collection
-                var addedFile = siteAssetsFolder.Files.Add(new FileCreationInformation 
-                { 
-                    Url = picRelativeUrl, ContentStream = graphImageStream 
+                var addedFile = siteAssetsFolder.Files.Add(new FileCreationInformation
+                {
+                    Url = picRelativeUrl,
+                    ContentStream = graphImageStream
                 });
                 await _mySitesCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
             }
@@ -153,16 +118,6 @@ namespace SPUserImageSync
                 // May get "User Profile Error 1000: User Not Found: Could not load profile data from the database."
                 _tracer.TrackTrace($"{azureAdUsername} profile update failed - {ex.Message}");
             }
-        }
-
-        string GetProfileId(string azureAdUsername)
-        {
-            return $"i:0#.f|membership|{azureAdUsername}";
-        }
-        public void Dispose()
-        {
-            _adminCtx.Dispose();
-            _mySitesCtx.Dispose();
         }
     }
 }

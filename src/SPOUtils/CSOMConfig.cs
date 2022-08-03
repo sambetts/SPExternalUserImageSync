@@ -16,11 +16,5 @@ namespace SPOUtils
 
         [ConfigSection("AzureAd")]
         public AzureAdConfig AzureAdConfig { get; set; } = null!;
-
-        [ConfigValue]
-        public string BaseServerAddress { get; set; } = string.Empty;
-
-        [ConfigValue]
-        public string KeyVaultUrl { get; set; } = string.Empty;
     }
 }

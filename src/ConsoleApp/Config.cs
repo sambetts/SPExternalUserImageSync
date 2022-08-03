@@ -11,7 +11,7 @@ namespace SPUserImageSync
         }
 
         [ConfigValue]
-        public string SPOHostname { get; set; } = string.Empty;
+        public string TenantName { get; set; } = string.Empty;
 
         [ConfigValue]
         public string? SPSecret { get; set; } = string.Empty;

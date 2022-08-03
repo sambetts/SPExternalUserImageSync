@@ -1,8 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿
+using ConsoleApp.Engine;
 using SPOUtils;
 using SPUserImageSync;
 
-Console.WriteLine("Image Sync start-up");
 
 var config = ConsoleUtils.GetConfigurationWithDefaultBuilder();
 ConsoleUtils.PrintCommonStartupDetails();
@@ -16,7 +16,8 @@ if (config.HaveAppInsightsConfigured)
 else
     tracer = DebugTracer.ConsoleOnlyTracer();
 
+tracer.TrackTrace("Image Sync start-up");
 
-var s = new ImgSync(config, tracer);
-await s.Go("sambetts_microsoft.com#EXT#@M365x72460609.onmicrosoft.com");
+var s = new AzureAdImageSyncer(config, tracer);
+await s.FindAndSyncAllExternalUserImagesToSPO();
 

@@ -42,7 +42,7 @@ Set-SPOTenant -DisableCustomAppAuthentication $false
 ```
 
 ### Graph App setup
-*	Create an application registration in Azure with a client secret & the permission “User.Read.All”.
+*	Create an application registration in Azure with a client secret & the permission “User.Read.All” (application permission).
 *	Grant admin consent to permission.
 
 ## Configuration Needed

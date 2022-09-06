@@ -60,6 +60,12 @@ SimulateSPOUpdatesOnly | true | Write updates to SPO or just pretend. Highly rec
 AppInsightsInstrumentationKey | "76da79c3-5381-4930-bbda-f6e8dc406b6e" | Optional (but recommended). Application Insights instrumentation key for logging.
 
 If any of these values are blank the app will crash on start-up.
+
+Important: If you're using appsettings.json the appsettings.json file needs to be copied to output dir. By default it isn't so make sure this is set.
+![alt](imgs/copyalways.jpg)
+
+
+
 ## Setup Instructions
 Download the source and build the solution. If testing locally, create a “appsettings.json” from “appsettings - template.json” and fill in the configuration needed. 
 

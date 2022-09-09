@@ -19,14 +19,22 @@ namespace ConsoleApp.Engine
         private ClientContext _mySitesCtx;
         private PeopleManager _peopleManager;
 
-        public AzureAdImageSyncer(Config config, DebugTracer tracer) : base(config, tracer, new GraphServiceClient(
-                new ClientSecretCredential(config.AzureAdConfig.TenantId, config.AzureAdConfig.ClientID, config.AzureAdConfig.Secret)))
+        public AzureAdImageSyncer(Config config, DebugTracer tracer) : base(config, tracer, GetGraphClient(config))
         {
+
             var siteUrlAdmin = $"https://{_config.TenantName}-admin.sharepoint.com";
             var siteUrlMySite = $"https://{_config.TenantName}-my.sharepoint.com";
             _adminCtx = new AuthenticationManager().GetACSAppOnlyContext(siteUrlAdmin, _config.SPClientID, _config.SPSecret);
             _mySitesCtx = new AuthenticationManager().GetACSAppOnlyContext(siteUrlMySite, _config.SPClientID, _config.SPSecret);
             _peopleManager = new PeopleManager(_adminCtx);
+        }
+
+        static GraphServiceClient GetGraphClient(Config config)
+        {
+            var c = new GraphServiceClient(
+                new ClientSecretCredential(config.AzureAdConfig.TenantId, config.AzureAdConfig.ClientID, config.AzureAdConfig.Secret));
+            c.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(60);
+            return c;
         }
 
         #endregion

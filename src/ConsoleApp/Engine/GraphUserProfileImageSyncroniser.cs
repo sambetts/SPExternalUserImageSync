@@ -88,6 +88,11 @@ namespace ConsoleApp.Engine
                 _tracer.TrackTrace($"User '{azureAdUsername}' has no photo in Azure AD. Skipping user.");
                 return;
             }
+            catch (ServiceException ex)
+            {
+                _tracer.TrackTrace($"Error {ex.Message} loading profile for user '{azureAdUsername}'. Skipping user.");
+                return;
+            }
 
             var picRelativeUrl = $"/User Photos/Profile Pictures/{Guid.NewGuid()}_ExternalMigratedThumbnail.jpg";
             var fullPicUrl = $"{_mySitesCtx.Web.Url}{picRelativeUrl}";

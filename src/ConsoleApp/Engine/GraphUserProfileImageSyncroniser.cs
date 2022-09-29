@@ -29,7 +29,16 @@ namespace ConsoleApp.Engine
             var personProperties = _peopleManager.GetPropertiesFor(spProfileId);
 
             _adminCtx.Load(personProperties, p => p.AccountName, p => p.PictureUrl);
-            await _adminCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
+            try
+            {
+                await _adminCtx.ExecuteQueryAsyncWithThrottleRetries(_tracer);
+            }
+            catch (Exception ex)
+            {
+                _tracer.TrackException(ex);
+                _tracer.TrackTrace($"Couldn't load SP properties for user '{azureAdUsername}'. Skipping for now. Error was:{ex.Message}");
+                return;
+            }
 
             var url = string.Empty;
             try
